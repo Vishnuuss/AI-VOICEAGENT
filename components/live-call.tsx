@@ -28,6 +28,7 @@ export function LiveCall() {
   const { data: personas } = useSWR<Persona[]>("/api/personas", fetcher)
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [ending, setEnding] = useState(false)
+  const [isEmbedded, setIsEmbedded] = useState(false)
   const transcriptRef = useRef<HTMLDivElement>(null)
 
   const {
@@ -47,6 +48,10 @@ export function LiveCall() {
 
   const inCall = state !== "idle"
   const selected = personas?.find((p) => p.id === selectedId) || personas?.[0]
+
+  useEffect(() => {
+    setIsEmbedded(window.self !== window.top)
+  }, [])
 
   useEffect(() => {
     if (personas && personas.length > 0 && selectedId === null) {
@@ -137,7 +142,16 @@ export function LiveCall() {
           </div>
         )}
 
-        {error && <p className="max-w-sm text-center text-sm text-destructive">{error}</p>}
+        {error && (
+          <div className="flex max-w-md flex-col items-center gap-3 text-center" role="alert">
+            <p className="text-sm text-destructive">{error}</p>
+            {isEmbedded && (
+              <Button variant="outline" onClick={() => window.open(window.location.href, "_blank", "noopener,noreferrer")}>
+                Open call in new tab
+              </Button>
+            )}
+          </div>
+        )}
 
         {/* controls */}
         <div className="flex items-center gap-3">

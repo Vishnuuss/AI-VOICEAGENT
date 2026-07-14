@@ -471,12 +471,19 @@ export function useVoiceAgent() {
           setStateSafe("listening")
         }
       } catch (e) {
-        console.error("[v0] start error:", e)
-        setError(
-          (e as Error).name === "NotAllowedError"
-            ? "Microphone access denied. Please allow mic access and try again."
-            : "Could not start the call. Check your microphone.",
-        )
+        const mediaError = e as DOMException
+        const isEmbedded = window.self !== window.top
+        const message =
+          mediaError.name === "NotAllowedError"
+            ? isEmbedded
+              ? "Microphone access is blocked inside the embedded preview. Open this call in a new tab, allow microphone access there, then start again."
+              : "Microphone access is blocked for this site. Allow it from your browser’s address-bar permissions, reload, and start again."
+            : mediaError.name === "NotFoundError"
+              ? "No microphone was found. Connect a microphone and start again."
+              : mediaError.name === "NotReadableError"
+                ? "Your microphone is being used by another app. Close that app and start again."
+                : "The microphone could not start. Check your audio device and browser permissions."
+        setError(message)
         setStateSafe("idle")
       }
     },
